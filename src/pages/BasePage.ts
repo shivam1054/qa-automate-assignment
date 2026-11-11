@@ -1,6 +1,7 @@
 import { Page } from '@playwright/test';
 import { CookieBanner } from '../components';
 import { Route } from '../config/routes';
+import { skipIfCloudflareChallenge } from '../utils';
 
 /** Shared behaviour for all pages: navigation and site-wide components. */
 export abstract class BasePage {
@@ -12,7 +13,9 @@ export abstract class BasePage {
   }
 
   async open(): Promise<this> {
-    await this.page.goto(this.route, { waitUntil: 'domcontentloaded' });
+    const response = await this.page.goto(this.route, { waitUntil: 'domcontentloaded' });
+    // Environment guard: if Cloudflare serves its challenge page, skip with a clear reason instead of timing out.
+    skipIfCloudflareChallenge(response);
     await this.cookieBanner.acceptIfPresent();
     return this;
   }
