@@ -1,18 +1,21 @@
 import { Page, Response, test } from '@playwright/test';
 
 export const CLOUDFLARE_BLOCK_REASON =
-  'Cloudflare bot protection served a challenge page instead of the site (common for CI / data-centre IPs). ' +
+  'Cloudflare blocked this runner (challenge or 401/403 instead of the site – common for CI / data-centre / non-Thai IPs). ' +
   'Run locally, or use a test environment / allow-listed runner.';
 
 /**
- * True when Cloudflare answered with a challenge instead of the real page.
- * Cloudflare marks these responses with the `cf-mitigated: challenge` header (usually status 403/503).
+ * True when Cloudflare refused or challenged the request instead of serving the site:
+ * - `cf-mitigated: challenge` header (managed challenge), or
+ * - a 401/403/429/503 answered by Cloudflare itself (WAF / geo / data-centre IP block –
+ *   GitHub-hosted runners get `401` with an empty `{}` body).
  */
 export const isCloudflareChallenge = (response: Response | null): boolean => {
   if (!response) return false;
   const headers = response.headers();
   if (headers['cf-mitigated'] === 'challenge') return true;
-  return [403, 503].includes(response.status()) && (headers['server'] ?? '').toLowerCase().includes('cloudflare');
+  const servedByCloudflare = (headers['server'] ?? '').toLowerCase().includes('cloudflare');
+  return servedByCloudflare && [401, 403, 429, 503].includes(response.status());
 };
 
 /** Titles / markers of Cloudflare challenge and block pages (status may be 200 on some of them). */
