@@ -31,7 +31,7 @@ export class LotterySearch extends BaseComponent {
   async pressKey(index: number, key: string): Promise<void> {
     const box = this.digitBox(index);
     await box.click();
-    await box.press(key);
+    await box.pressSequentially(key);
   }
 
   /**

@@ -60,23 +60,31 @@ spec  ──uses──▶  fixture  ──creates──▶  Page  ──composes
 - **Specs** – assertions only, grouped with `test.step`, data-driven from `src/data`, tagged for selective runs.
 - The site renders separate desktop/mobile copies of some widgets; `utils/firstVisible()` picks the visible one, so the same specs run on both viewports.
 
+### Stability decisions
+
+- **Hydration-safe clicks** – the homepage is server-rendered; a click that lands before React hydrates is ignored. `HomePage.openNokCashAsGuest()` retries the click (`expect.toPass`) until the login modal opens, instead of using fixed sleeps.
+- **Contract-level search assertions** – search specs verify the lottoboard URL _and_ the `GET /api/lotteries` request the page sends (`type`, `number`), so they don't depend on live stock or backend availability.
+- **Cloudflare bot protection** – the site's Cloudflare challenge intermittently returns `403` to `/api/lotteries` and `/api/auth/get-url` for automated browsers. The two tests that depend on those responses (rendered results, LINE redirect) first verify the request was sent, then skip themselves with a clear reason when that happens, instead of failing. No attempt is made to bypass the protection; in a real project the fix is a test environment or an allow-listed CI runner.
+- **Modal anchoring** – the login modal's inner container has a different `data-testid` per page (`global-modal` on Home, `option-modal` on /nok-cash), so the component anchors on the shared `modal-backdrop` + message text.
+- **Modest parallelism** – the site's API throttles bursts of parallel sessions, so workers are capped at 3 locally / 2 in CI.
+
 ## Automated scenarios
 
-| Spec           | Test                                                                | Scenario ID (Assignment 2) | Technique                      | Tags             |
-| -------------- | ------------------------------------------------------------------- | -------------------------- | ------------------------------ | ---------------- |
-| nok-cash-entry | NokCash entry "เติมนกแคช" visible & enabled                         | TS-001 / TS-004            | Use case, responsive           | @smoke           |
-| nok-cash-entry | Guest clicks NokCash → login-required modal                         | TS-002                     | Decision table (logged-in = N) | @smoke           |
-| nok-cash-entry | Cancel ("ยกเลิก") keeps guest on homepage                           | TS-002                     | State transition               | @regression      |
-| nok-cash-entry | Confirm ("ตกลง") redirects to LINE Login                            | TS-002                     | State transition               | @regression      |
-| nok-cash-entry | Direct `/nok-cash` as guest requires login, form not rendered       | TS-003                     | Error guessing / security      | @smoke @negative |
-| lottery-search | 6 numeric digit boxes with accessible labels                        | –                          | UI / accessibility             | @smoke           |
-| lottery-search | Valid patterns (6 digits, last 2, last 3, first 3) → `number` param | –                          | Equivalence partitioning       | @regression      |
-| lottery-search | Non-numeric keys (a, Z, ก, -, ., @) rejected                        | –                          | EP (invalid class)             | @negative        |
-| lottery-search | Typing a digit auto-advances focus                                  | –                          | Use case                       | @regression      |
-| lottery-search | ทั้งหมด / หวยเดี่ยว / หวยชุด → `type` param                         | –                          | Decision table                 | @regression      |
-| lottery-search | Random search returns results                                       | –                          | Use case                       | @smoke           |
+| Spec           | Test                                                                                 | Scenario ID (Assignment 2) | Technique                      | Tags             |
+| -------------- | ------------------------------------------------------------------------------------ | -------------------------- | ------------------------------ | ---------------- |
+| nok-cash-entry | NokCash entry "เติมนกแคช" visible & enabled                                          | TS-001 / TS-004            | Use case, responsive           | @smoke           |
+| nok-cash-entry | Guest clicks NokCash → login-required modal                                          | TS-002                     | Decision table (logged-in = N) | @smoke           |
+| nok-cash-entry | Cancel ("ยกเลิก") keeps guest on homepage                                            | TS-002                     | State transition               | @regression      |
+| nok-cash-entry | Confirm ("ตกลง") redirects to LINE Login                                             | TS-002                     | State transition               | @regression      |
+| nok-cash-entry | Direct `/nok-cash` as guest requires login, form not rendered                        | TS-003                     | Error guessing / security      | @smoke @negative |
+| lottery-search | 6 numeric digit boxes with accessible labels                                         | –                          | UI / accessibility             | @smoke           |
+| lottery-search | Valid patterns (6 digits, last 2, last 3, first 3) → `number` in URL and API request | –                          | Equivalence partitioning       | @regression      |
+| lottery-search | Non-numeric keys (a, Z, ก, -, ., @) rejected                                         | –                          | EP (invalid class)             | @negative        |
+| lottery-search | Typing a digit auto-advances focus                                                   | –                          | Use case                       | @regression      |
+| lottery-search | ทั้งหมด / หวยเดี่ยว / หวยชุด → `type` param                                          | –                          | Decision table                 | @regression      |
+| lottery-search | Random search returns results                                                        | –                          | Use case                       | @smoke           |
 
-16 tests × 2 projects = **32 test runs** (10 smoke runs).
+17 tests × 2 projects = **34 test runs**.
 
 ## Out of scope (and why)
 

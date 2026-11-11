@@ -9,7 +9,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: ENV.isCI,
   retries: ENV.isCI ? 2 : 1,
-  workers: ENV.isCI ? 2 : undefined,
+  // The site's API throttles bursts of parallel sessions; keep concurrency modest.
+  workers: ENV.isCI ? 2 : 3,
   reporter: [['list'], ['html', { open: 'never' }], ['junit', { outputFile: 'test-results/junit.xml' }]],
   use: {
     baseURL: ENV.baseUrl,
