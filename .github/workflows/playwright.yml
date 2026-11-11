@@ -18,6 +18,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run typecheck
       - run: npm run lint
+      - name: Probe target site from this runner
+        run: node scripts/probe-site.mjs
       - run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: always()

@@ -15,7 +15,7 @@ export abstract class BasePage {
   async open(): Promise<this> {
     const response = await this.page.goto(this.route, { waitUntil: 'domcontentloaded' });
     // Environment guard: if Cloudflare serves its challenge page, skip with a clear reason instead of timing out.
-    skipIfCloudflareChallenge(response);
+    await skipIfCloudflareChallenge(this.page, response);
     await this.cookieBanner.acceptIfPresent();
     return this;
   }

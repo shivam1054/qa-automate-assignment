@@ -8,6 +8,10 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   { ...playwright.configs['flat/recommended'], files: ['tests/**/*.ts'] },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: { process: 'readonly', console: 'readonly' } },
+  },
+  {
     files: ['tests/**/*.ts'],
     rules: {
       'playwright/expect-expect': 'off',
